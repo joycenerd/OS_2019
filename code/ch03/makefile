@@ -1,12 +1,13 @@
 SHELL=/bin/bash
 CC=gcc
+CFLAGS=-pthread -lrt
 SRC=$(wildcard *.c)
 EXE=$(patsubst %.c,%,$(SRC))
 
 all:$(EXE)
 
 %:	%.c
-	${CC} $@.c -o $@
+	${CC} $@.c ${CFLAGS} -o $@
 
 clean:
 	rm ${EXE}
