@@ -4,6 +4,7 @@
 
 int sum;
 
+// the thread
 void *runner(void *parameter) {
     sum=0;
     int i;
@@ -12,8 +13,8 @@ void *runner(void *parameter) {
 }
 
 int main(int argc, char **argv) {
-    pthread_t threadID;
-    pthread_attr_t attribute;
+    pthread_t threadID; // thread id
+    pthread_attr_t attribute;   // thread attributes for the thread
 
     if(argc!=2) {
         fprintf(stderr,"usage pthread <integer value>\n");
@@ -25,9 +26,9 @@ int main(int argc, char **argv) {
         return -1;
     }
 
-    pthread_attr_init(&attribute);
-    pthread_create(&threadID,&attribute,runner,argv[1]);
-    pthread_join(threadID,NULL);
+    pthread_attr_init(&attribute);  // get the default attribute
+    pthread_create(&threadID,&attribute,runner,argv[1]);    // create the thread
+    pthread_join(threadID,NULL);    // wait for the thread (child) to exit
     printf("%d\n",sum);
     return 0;
 }
