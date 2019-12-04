@@ -1,5 +1,9 @@
+#define _GNU_SOURCE
 #include <pthread.h>
 #include <stdio.h>
+#include <sched.h>
+#include <stdlib.h>
+
 #define NUM_OF_THREADS 5
 
 
@@ -7,11 +11,23 @@ void *runner(void *param) {
     pthread_exit(0);
 } 
 
+// run on specific CPU
+void setCPUAffinity(char *cpu) {
+    int cpuid=atoi(cpu);
+    cpu_set_t mask;
+
+    CPU_ZERO(&mask);
+    CPU_SET(cpuid,&mask);
+    sched_setaffinity(0,sizeof(mask),&mask);
+}
  
 int main(int argc, char *argv[]) {
     pthread_attr_t attribute;
     int policy,i;
     pthread_t threadid[NUM_OF_THREADS];
+
+    // run on specific CPU
+    setCPUAffinity(argv[1]);
 
     // get the default attribute
     pthread_attr_init(&attribute);
@@ -31,6 +47,7 @@ int main(int argc, char *argv[]) {
     if(pthread_attr_setschedpolicy(&attribute,SCHED_FIFO)!=0) {
         fprintf(stderr,"Unable to set policy.\n");
     }
+    printf("Set pthread SCHED_FIFO policy success\n");
 
     // create the threads
     for(i=0;i<NUM_OF_THREADS;i++) {
