@@ -16,11 +16,12 @@ int main(int argc, char *argv[]) {
     // get the default attribute
     pthread_attr_init(&attribute);
 
-    // get the current schduling
+    // get the current schduling policy
     if(pthread_attr_getschedpolicy(&attribute,&policy)!=0) {
         fprintf(stderr,"Unable to get policy.\n");
     }
     else {
+        printf("Default policy is ");
         if(policy==SCHED_OTHER) printf("SCHED_OTHER\n");
         else if(policy==SCHED_RR) printf("SCHED_RR\n");
         else if(policy==SCHED_FIFO) printf("SCHED_FIFO\n");
