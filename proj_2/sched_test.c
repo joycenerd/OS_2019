@@ -7,7 +7,7 @@ void *runner(void *param) {
     pthread_exit(0);
 } 
 
-
+ 
 int main(int argc, char *argv[]) {
     pthread_attr_t attribute;
     int policy,i;
