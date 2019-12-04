@@ -12,12 +12,11 @@ void *runner(void *param) {
 } 
 
 // run on specific CPU
-void setCPUAffinity(char *cpu) {
-    int cpuid=atoi(cpu);
+void setCPUAffinity(int cpu) {
     cpu_set_t mask;
 
     CPU_ZERO(&mask);
-    CPU_SET(cpuid,&mask);
+    CPU_SET(cpu,&mask);
     sched_setaffinity(0,sizeof(mask),&mask);
 }
  
@@ -27,7 +26,7 @@ int main(int argc, char *argv[]) {
     pthread_t threadid[NUM_OF_THREADS];
 
     // run on specific CPU
-    setCPUAffinity(argv[1]);
+    setCPUAffinity(1);
 
     // get the default attribute
     pthread_attr_init(&attribute);
