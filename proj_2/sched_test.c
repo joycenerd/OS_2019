@@ -3,60 +3,90 @@
 #include <stdio.h>
 #include <sched.h>
 #include <stdlib.h>
+#include <errno.h>
+#include <assert.h>
+#include <string.h>
 
-#define NUM_OF_THREADS 5
+
+pthread_barrier_t barrier;
 
 
-void *runner(void *param) {
-    pthread_exit(0);
-} 
-
-// run on specific CPU
-void setCPUAffinity(int cpu) {
+void *runner(void *parameter) {
+    int threadid,i,j;
+    int ret=0;
     cpu_set_t mask;
+    struct sched_param param;
+    double cnt;
 
-    CPU_ZERO(&mask);
-    CPU_SET(cpu,&mask);
-    sched_setaffinity(0,sizeof(mask),&mask);
+    threadid=*(int *)parameter;
+
+    if(*((int *)parameter+1)) {
+        // set CPU affinity
+        CPU_ZERO(&mask);
+        CPU_SET(0,&mask);
+        ret=sched_setaffinity(1,sizeof(mask),&mask);
+
+        // set thread priority 
+        printf("Thread %d sched_scheduler()\n",threadid);
+        param.sched_priority=sched_get_priority_max(SCHED_FIFO);
+        ret=sched_setscheduler(0,SCHED_FIFO,&param);
+        printf("Thread %d sched after %s\n",threadid,strerror(errno));
+    }
+
+    // Thread running -> busy waiting for 1 second
+    pthread_barrier_wait(&barrier);
+    printf("ERROR %s\n",strerror(errno));
+    for(i=0;i<8;i++) {
+        printf("Thread %d is running\n",threadid);
+        cnt=0;
+        for(j=0;j<10000000;j++) {
+            cnt+=0.1f;
+        }
+    }
+    return (void *)0;
 }
- 
+
+void *createArg(int x, int schedular) {
+    int *p=(int *)malloc(sizeof(int)*2);
+    *p=x;
+    *(p+1)=schedular;
+    return (void *)p;
+}
+
+
 int main(int argc, char *argv[]) {
-    pthread_attr_t attribute;
-    int policy,i;
-    pthread_t threadid[NUM_OF_THREADS];
+    int numOfThread,i,err,policy,schedular;
+    pthread_attr_t attr;
 
-    // run on specific CPU
-    setCPUAffinity(1);
+    // get the number of thread from the input    
+    numOfThread=atoi(argv[1]);
+    pthread_t threadid[numOfThread];
 
-    // get the default attribute
-    pthread_attr_init(&attribute);
-
-    // get the current schduling policy
-    if(pthread_attr_getschedpolicy(&attribute,&policy)!=0) {
+    // get default policy
+    pthread_attr_init(&attr);
+    if(pthread_attr_getschedpolicy(&attr,&policy)!=0) {
         fprintf(stderr,"Unable to get policy.\n");
+    
     }
     else {
         printf("Default policy is ");
         if(policy==SCHED_OTHER) printf("SCHED_OTHER\n");
-        else if(policy==SCHED_RR) printf("SCHED_RR\n");
         else if(policy==SCHED_FIFO) printf("SCHED_FIFO\n");
+        else if(policy==SCHED_RR) printf("SCHED_RR\n");
     }
 
-    // set the scheduling policy to SCHED_FIFO
-    if(pthread_attr_setschedpolicy(&attribute,SCHED_FIFO)!=0) {
-        fprintf(stderr,"Unable to set policy.\n");
+    // set new policy
+    if(argc==3){
+        if(strncmp(argv[2],"SCHED_FIFO",strlen("SCHED_FIFO"))==0) schedular=SCHED_FIFO;
+        else if(strncmp(argv[2],"SCHED_RR",strlen("SCHED_RR"))==0) schedular=SCHED_RR;
     }
-    printf("Set pthread SCHED_FIFO policy success\n");
+    else schedular=policy;
 
-    // create the threads
-    for(i=0;i<NUM_OF_THREADS;i++) {
-        pthread_create(&threadid[i],&attribute,runner,NULL);
-    }
-
-    // join on each thread -> wait for the thread to complete
-    for(i=0;i<NUM_OF_THREADS;i++) {
-        pthread_join(threadid[i],NULL);
+    pthread_barrier_init(&barrier,NULL,numOfThread);
+    for(i=0;i<numOfThread;i++) {
+        printf("Thread %d was created.\n",i+1);
+        err=pthread_create(&threadid[i],NULL,runner,createArg(i+1,schedular));
+        assert(err==0);
     }
 
-    return 0;
 }
