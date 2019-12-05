@@ -11,6 +11,7 @@
 pthread_barrier_t barrier;
 
 
+// runner function for the threads
 void *runner(void *parameter) {
     int threadid,i,j;
     int ret=0;
@@ -75,18 +76,24 @@ int main(int argc, char *argv[]) {
         else if(policy==SCHED_RR) printf("SCHED_RR\n");
     }
 
-    // set new policy
+    // define new policy
     if(argc==3){
         if(strncmp(argv[2],"SCHED_FIFO",strlen("SCHED_FIFO"))==0) schedular=SCHED_FIFO;
         else if(strncmp(argv[2],"SCHED_RR",strlen("SCHED_RR"))==0) schedular=SCHED_RR;
     }
     else schedular=policy;
 
+    // create threads
     pthread_barrier_init(&barrier,NULL,numOfThread);
     for(i=0;i<numOfThread;i++) {
         printf("Thread %d was created.\n",i+1);
         err=pthread_create(&threadid[i],NULL,runner,createArg(i+1,schedular));
         assert(err==0);
     }
+
+    // wait for the thread to complete
+    for(i=0;i<numOfThread;i++) {
+        pthread_join(threadid[i],NULL);
+    } 
 
 }
