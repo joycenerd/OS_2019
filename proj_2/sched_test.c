@@ -66,12 +66,12 @@ int main(int argc, char *argv[]) {
             printf("Set pthread SCHED_RR policy success\n");
         }
     }
-
     else scheduler=policy;
     param.sched_priority=sched_get_priority_max(scheduler);
     ret=sched_setscheduler(0,scheduler,&param);
 
 
+    // Create threads
     for(i=0;i<numOfThread;i++) {
         // printf("Thread %d was created.\n",i+1);
         err=pthread_create(&threadid[i],NULL,runner,NULL);
